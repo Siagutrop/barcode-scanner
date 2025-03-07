@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "studio": "npx prisma studio --port 5555 --hostname 0.0.0.0"
+    "studio": "npx prisma studio -p 5555 -n 0.0.0.0"
   },
   "dependencies": {
     "@prisma/client": "5.10.2",
