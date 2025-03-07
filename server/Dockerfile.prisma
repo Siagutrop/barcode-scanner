@@ -2,6 +2,9 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Installation des dépendances système requises pour Prisma
+RUN apk add --no-cache openssl1.1-compat
+
 # Installation des dépendances Prisma
 COPY package*.json ./
 COPY prisma ./prisma/
