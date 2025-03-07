@@ -10,6 +10,7 @@ RUN apt-get update && \
 # Installation des dépendances Prisma
 COPY package*.json ./
 COPY prisma ./prisma/
+COPY init-db.js ./
 RUN npm install
 
 # Génération du client Prisma
@@ -17,4 +18,8 @@ RUN npx prisma generate
 
 EXPOSE 5555
 
-CMD ["npx", "prisma", "studio", "--port", "5555", "--browser", "none"]
+# Script de démarrage pour initialiser la DB si nécessaire
+COPY start-prisma.sh ./
+RUN chmod +x start-prisma.sh
+
+CMD ["./start-prisma.sh"]
