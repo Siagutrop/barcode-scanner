@@ -13,5 +13,8 @@ if [ ! -f "/app/data/scanner.db" ]; then
   node init-db.js
 fi
 
+# Démarrer Prisma Studio en arrière-plan
+npx prisma studio -p 5555 -n 0.0.0.0 &
+
 # Démarrer le serveur
 npm start
