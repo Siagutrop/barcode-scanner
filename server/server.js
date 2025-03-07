@@ -11,8 +11,12 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Utiliser le chemin correct pour la base de données
+const dbPath = process.env.DATABASE_URL?.replace('file:', '') || join(__dirname, 'data', 'scanner.db');
+console.log('Chemin de la base de données:', dbPath);
+
 // Connexion à la base de données SQLite
-const db = new sqlite3.Database(join(__dirname, 'scanner.db'), (err) => {
+const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Erreur de connexion à la base de données:', err);
   } else {
@@ -29,13 +33,16 @@ const db = new sqlite3.Database(join(__dirname, 'scanner.db'), (err) => {
       if (err) {
         console.error('Erreur lors de la création de la table users:', err);
       } else {
-        // Créer le compte admin par défaut
-        db.get('SELECT id FROM users WHERE username = ?', ['admin'], (err, row) => {
+        // Créer le compte admin par défaut avec les variables d'environnement
+        const adminUsername = process.env.ADMIN_USERNAME || 'admin';
+        const adminPassword = process.env.ADMIN_PASSWORD || 'Algarve@18';
+        
+        db.get('SELECT id FROM users WHERE username = ?', [adminUsername], (err, row) => {
           if (err) {
             console.error('Erreur lors de la vérification du compte admin:', err);
           } else if (!row) {
             db.run('INSERT INTO users (username, password, is_admin) VALUES (?, ?, 1)',
-              ['admin', 'Algarve@18'],
+              [adminUsername, adminPassword],
               (err) => {
                 if (err) {
                   console.error('Erreur lors de la création du compte admin:', err);
