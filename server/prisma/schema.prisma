@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../scanner.db"
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  username   String    @unique(map: "sqlite_autoindex_users_1")
+  password   String
+  is_admin   Boolean?  @default(false)
+  created_at DateTime? @default(now())
+  font_size  String?   @default("normal")
+  scans      Scan[]
+
+  @@map("users")
+}
+
+model Scan {
+  id         Int       @id @default(autoincrement())
+  user_id    Int?
+  code1      String
+  code2      String
+  is_match   Boolean
+  scanned_at DateTime? @default(now())
+  confirmed  Boolean?  @default(true)
+  user       User?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("scans")
+}

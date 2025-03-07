@@ -1,0 +1,15 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Installation des dépendances Prisma
+COPY package*.json ./
+COPY prisma ./prisma/
+RUN npm install
+
+# Génération du client Prisma
+RUN npx prisma generate
+
+EXPOSE 5555
+
+CMD ["npx", "prisma", "studio", "--port", "5555", "--host", "0.0.0.0"]
