@@ -11,7 +11,7 @@ Application web permettant de scanner et comparer des codes-barres, avec interfa
 
 1. Clonez le dépôt :
 ```bash
-git clone <votre-depot>
+git clone https://github.com/Siagutrop/barcode-scanner.git
 cd barcode-scanner
 ```
 
@@ -90,10 +90,6 @@ Les données sont stockées dans le dossier spécifié par `DB_PATH`. Pour sauve
    - Vérifiez les logs : `docker-compose logs`
    - Assurez-vous que les pare-feux autorisent les ports
 
-2. Si la caméra ne fonctionne pas :
-   - Vérifiez que vous utilisez HTTPS ou localhost
-   - Autorisez l'accès à la caméra dans votre navigateur
-
-3. Si Prisma Studio ne se connecte pas :
+2. Si Prisma Studio ne se connecte pas :
    - Vérifiez les logs : `docker-compose logs prisma-studio`
    - Assurez-vous que le dossier de données existe et a les bonnes permissions
