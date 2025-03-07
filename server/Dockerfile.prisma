@@ -12,4 +12,4 @@ RUN npx prisma generate
 
 EXPOSE 5555
 
-CMD ["npx", "prisma", "studio", "--port", "5555", "--host", "0.0.0.0"]
+CMD ["npx", "prisma", "studio", "--port", "5555", "--browser", "none"]
