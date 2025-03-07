@@ -9,13 +9,16 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Préfixe /api pour toutes les routes
+const router = express.Router();
+
 // Route d'inscription (désactivée)
-app.post('/register', (req, res) => {
+router.post('/register', (req, res) => {
   res.status(403).json({ error: "L'inscription publique est désactivée. Contactez un administrateur." });
 });
 
 // Route de connexion
-app.post('/login', async (req, res) => {
+router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   
   try {
@@ -45,7 +48,7 @@ app.post('/login', async (req, res) => {
 });
 
 // Route pour ajouter un scan
-app.post('/scans', async (req, res) => {
+router.post('/scans', async (req, res) => {
   const { userId, code1, code2, isMatch, confirmed = true } = req.body;
   
   try {
@@ -67,7 +70,7 @@ app.post('/scans', async (req, res) => {
 });
 
 // Route pour récupérer les scans d'un utilisateur
-app.get('/scans', async (req, res) => {
+router.get('/scans', async (req, res) => {
   const { userId } = req.query;
   
   if (!userId) {
@@ -95,7 +98,7 @@ app.get('/scans', async (req, res) => {
 });
 
 // Route pour récupérer tous les scans (admin seulement)
-app.get('/admin/scans', async (req, res) => {
+router.get('/admin/scans', async (req, res) => {
   const { userId } = req.query;
   
   try {
@@ -128,7 +131,7 @@ app.get('/admin/scans', async (req, res) => {
 });
 
 // Route pour récupérer tous les utilisateurs (admin seulement)
-app.get('/admin/users', async (req, res) => {
+router.get('/admin/users', async (req, res) => {
   const { userId } = req.query;
   
   try {
@@ -162,7 +165,7 @@ app.get('/admin/users', async (req, res) => {
 });
 
 // Route pour mettre à jour les préférences d'un utilisateur
-app.post('/users/:id/preferences', async (req, res) => {
+router.post('/users/:id/preferences', async (req, res) => {
   const userId = parseInt(req.params.id);
   const { fontSize } = req.body;
   
@@ -178,6 +181,9 @@ app.post('/users/:id/preferences', async (req, res) => {
     res.status(500).json({ error: "Erreur lors de la mise à jour des préférences" });
   }
 });
+
+// Montage du router avec le préfixe /api
+app.use('/api', router);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
