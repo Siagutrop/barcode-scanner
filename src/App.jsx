@@ -13,7 +13,8 @@ import {
 import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx'
 import './App.css'
 
-const API_URL = import.meta.env.PROD ? '/api' : 'http://localhost:3000';
+// Force l'utilisation de /api comme base URL
+const API_URL = '/api';
 
 function App() {
   const [code1, setCode1] = useState('')
