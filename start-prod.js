@@ -23,7 +23,7 @@ const startServer = () => {
 
 // Démarrer le serveur frontend en mode production
 const startFrontend = () => {
-  const frontendProcess = exec('npm run preview', {
+  const frontendProcess = exec('vite preview --host 0.0.0.0 --port 4173', {
     cwd: __dirname
   });
 
@@ -50,6 +50,4 @@ process.on('SIGINT', () => {
 // Démarrer les services
 console.log('Démarrage des services...');
 processes.push(startServer());
-setTimeout(() => {
-  processes.push(startFrontend());
-}, 2000); // Attendre 2 secondes que le serveur soit prêt
+processes.push(startFrontend());
