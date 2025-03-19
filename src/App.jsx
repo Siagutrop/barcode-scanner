@@ -13,8 +13,20 @@ import {
 import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx'
 import './App.css'
 
-// Force l'utilisation de /api comme base URL
-const API_URL = '/api';
+// URL du serveur local
+const API_URL = 'http://localhost:3002';
+
+// Fonction pour vérifier si le serveur est disponible
+const checkServerConnection = async () => {
+  try {
+    // Utiliser une route qui n'a pas besoin de paramètres
+    const response = await fetch(`${API_URL}/health`);
+    return response.ok;
+  } catch (error) {
+    console.error('Erreur de connexion au serveur:', error);
+    return false;
+  }
+};
 
 function App() {
   const [code1, setCode1] = useState('')
@@ -47,6 +59,8 @@ function App() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [filterMatch, setFilterMatch] = useState('all');
   const [filterUser, setFilterUser] = useState('all');
+  const [searchQuery, setSearchQuery] = useState(''); // Nouveau state pour la recherche
+  const [searchField, setSearchField] = useState('all'); // Nouveau state pour le champ de recherche
   const [isMobile, setIsMobile] = useState(false)
   const [showMismatchPopup, setShowMismatchPopup] = useState(false)
   const videoRef = useRef(null)
@@ -99,21 +113,7 @@ function App() {
     }, 1000)
   }
 
-  const playFeedback = (type = 'scan') => {
-    // Vibration selon le type
-    if ('vibrate' in navigator) {
-      switch(type) {
-        case 'success':
-          navigator.vibrate([100, 50, 100])
-          break
-        case 'error':
-          navigator.vibrate([200])
-          break
-        default:
-          navigator.vibrate(50)
-      }
-    }
-    
+  const playFeedback = (type = 'scan') => {  
     // Son selon le type
     try {
       playSound(type)
@@ -131,100 +131,46 @@ function App() {
     }
   }, [])
 
-  const getBackCamera = async () => {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices()
-      const cameras = devices.filter(device => device.kind === 'videoinput')
-      const backCamera = cameras.find(camera => 
-        camera.label.toLowerCase().includes('back') || 
-        camera.label.toLowerCase().includes('arrière') ||
-        camera.label.toLowerCase().includes('rear')
-      )
-      return backCamera ? { deviceId: { exact: backCamera.deviceId } } : { facingMode: { exact: 'environment' } }
-    } catch (error) {
-      console.error('Erreur lors de la recherche de la caméra:', error)
-      return { facingMode: { exact: 'environment' } }
-    }
-  }
-
-  useEffect(() => {
-    const startCamera = async () => {
-      if (scanning && videoRef.current) {
-        try {
-          const backCameraConstraints = await getBackCamera()
-          readerRef.current
-            .decodeFromConstraints(
-              {
-                audio: false,
-                video: {
-                  width: { min: 640, ideal: 1280, max: 1920 },
-                  height: { min: 480, ideal: 720, max: 1080 },
-                  ...backCameraConstraints,
-                }
-              },
-              videoRef.current,
-              (result, err) => {
-                if (result) {
-                  const scannedCode = result.getText()
-                  if (scanningFor === 1) {
-                    setCode1(scannedCode)
-                  } else {
-                    setCode2(scannedCode)
-                  }
-                  playFeedback('scan')
-                  stopScanning()
-                }
-                if (err && !(err instanceof TypeError)) {
-                  console.warn(err)
-                }
-              }
-            )
-            .catch(err => {
-              console.error("Erreur d'accès à la caméra:", err)
-              alert("Erreur d'accès à la caméra. Assurez-vous d'avoir donné les permissions nécessaires.")
-            })
-        } catch (error) {
-          console.error('Erreur lors du démarrage de la caméra:', error)
-          alert("Impossible d'accéder à la caméra arrière. Vérifiez vos permissions.")
-        }
-      }
-    }
-    startCamera()
-  }, [scanning, scanningFor])
-
   useEffect(() => {
     const handleKeyPress = (event) => {
-      // Si on est en train de scanner avec la caméra, on ignore les entrées clavier
-      if (scanning) return
+      // Bloquer toute saisie si le popup est affiché
+      if (showMismatchPopup) {
+        event.preventDefault();
+        return;
+      }
       
-      // Si on appuie sur Entrée et qu'on a du texte
+      // Gestion normale des entrées
       if (event.key === 'Enter' && manualInput) {
-        playFeedback('scan')
-        // Si les deux codes sont déjà remplis, on réinitialise avant d'ajouter le nouveau code
+        event.preventDefault();
+        playFeedback('scan');
         if (code1 && code2) {
-          setCode1(manualInput)
-          setCode2('')
-          setResult('')
+          setCode1(manualInput);
+          setCode2('');
+          setResult('');
         } else if (!code1) {
-          setCode1(manualInput)
+          setCode1(manualInput);
         } else if (!code2) {
-          setCode2(manualInput)
+          setCode2(manualInput);
         }
-        setManualInput('')
+        setManualInput('');
       }
-    }
+    };
 
-    const handleInput = (event) => {
-      if (!scanning) {
-        setManualInput(event.target.value)
+    const handleKeyDown = (event) => {
+      // Double vérification pour la touche Entrée
+      if (showMismatchPopup && event.key === 'Enter') {
+        event.preventDefault();
       }
-    }
+    };
 
-    window.addEventListener('keypress', handleKeyPress)
+    window.addEventListener('keypress', handleKeyPress);
+    window.addEventListener('keydown', handleKeyDown);
+    
     return () => {
-      window.removeEventListener('keypress', handleKeyPress)
-    }
-  }, [scanning, code1, code2, manualInput])
+      window.removeEventListener('keypress', handleKeyPress);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [scanning, code1, code2, manualInput, showMismatchPopup]);
 
   // Fonction pour s'inscrire
   const handleRegister = async () => {
@@ -447,81 +393,56 @@ function App() {
     }
   };
 
-  const handleScan = async (e) => {
-    e?.preventDefault(); // Rendre le paramètre e optionnel
+  const handleScan = async () => {
+    if (code1 && code2) {
+      try {
+        const response = await fetch(`${API_URL}/scans`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: user.id,
+            code1,
+            code2,
+            isMatch: code1 === code2
+          })
+        });
 
-    if (!code1 || !code2) {
-      setError('Veuillez scanner les deux codes');
-      return;
-    }
-
-    const isMatch = code1 === code2;
-
-    // Mettre à jour le résultat et jouer le feedback sonore
-    const resultText = `${code1} ${isMatch ? '=' : '≠'} ${code2}`;
-    const newResult = isMatch ? `✅ Les codes correspondent ! ` : `❌ Les codes sont différents. (${resultText})`;
-    setResult(newResult);
-    setLastScanResult(newResult);
-    playFeedback(isMatch ? 'success' : 'error');
-
-    // Si les codes ne correspondent pas et que ce n'est pas une confirmation
-    if (!isMatch && !showMismatchPopup) {
-      setShowMismatchPopup(true);
-      return;
-    }
-
-    // Lancer les confettis si les codes correspondent
-    if (isMatch) {
-      confetti({
-        particleCount: 100,
-        spread: 100,
-        origin: { y: 1 },
-        colors: ['#26ccff', '#a25afd', '#ff5e7e', '#88ff5a', '#fcff42', '#ffa62d', '#ff36ff']
-      });
-    }
-
-    try {
-      const response = await fetch(`${API_URL}/scans`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          code1,
-          code2,
-          isMatch,
-          confirmed: !isMatch // Si les codes ne correspondent pas, marquer comme confirmé
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de l\'enregistrement du scan');
+        if (response.ok) {
+          const scan = await response.json();
+          setHistory(prev => [scan, ...prev]);
+          if (code1 === code2) {
+            playFeedback('success');
+          } else {
+            setShowMismatchPopup(true);
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de l\'enregistrement du scan:', error);
       }
-
-      const newScan = await response.json();
-      setHistory(prevHistory => [newScan, ...prevHistory]);
-      
-      // Fermer le popup et réinitialiser les codes
-      setShowMismatchPopup(false);
-      setCode1('');
-      setCode2('');
-      if (readerRef.current) {
-        readerRef.current.reset();
-      }
-    } catch (error) {
-      console.error('Erreur:', error);
-      setError('Erreur lors de l\'enregistrement du scan');
     }
+
+    // Réinitialiser après le scan
+    setCode1('');
+    setCode2('');
+    setResult('');
+    // Redémarrer le scan
+    startScanning(1);
   };
 
   const handleCodeValidation = () => {
+    // Ne pas valider si un scan est en cours
+    if (scanning) {
+      return;
+    }
+
     if (code1 && code2) {
-      if (code1 !== code2) {
+      const isMatch = code1 === code2;
+      if (!isMatch) {
         setShowMismatchPopup(true);
       } else {
-        // Les codes correspondent, sauvegarder directement
-        handleScan(true);
+        handleScan();
       }
     }
   };
@@ -535,11 +456,12 @@ function App() {
 
     try {
       const response = await fetch(`${API_URL}/scans?userId=${user.id}`);
-      if (!response.ok) {
-        throw new Error('Erreur lors de la récupération de l\'historique');
+      if (response.ok) {
+        const data = await response.json();
+        setHistory(data);
+      } else {
+        console.error('Erreur lors de la récupération de l\'historique');
       }
-      const data = await response.json();
-      setHistory(data);
     } catch (error) {
       console.error('Erreur:', error);
       alert('Erreur lors de la récupération de l\'historique');
@@ -550,20 +472,13 @@ function App() {
     if (user) {
       fetchHistory();
     }
-  }, [user]);
-
-  useEffect(() => {
-    if (code1 && code2) {
-      const isMatch = code1 === code2;
-      handleScan(isMatch);
-    }
-  }, [code1, code2]);
+  }, [user, fetchHistory]);
 
   useEffect(() => {
     if (isAdmin && currentView === 'admin' && adminView === 'scans') {
       fetchAllScans();
     }
-  }, [isAdmin, currentView, adminView]);
+  }, [isAdmin, currentView, adminView, fetchAllScans]);
 
   useEffect(() => {
     if (isAdmin && currentView === 'admin' && adminView === 'users') {
@@ -588,9 +503,16 @@ function App() {
     return date.toLocaleString('fr-FR', options);
   };
 
-  const clearHistory = () => {
-    setHistory([])
-  }
+  const clearHistory = async () => {
+    try {
+      await fetch(`${API_URL}/scans/clear/${user.id}`, {
+        method: 'DELETE'
+      });
+      setHistory([]);
+    } catch (error) {
+      console.error('Erreur lors de la suppression de l\'historique:', error);
+    }
+  };
 
   const startScanning = (codeNumber) => {
     // Si les deux codes sont remplis, on réinitialise avant de scanner
@@ -651,34 +573,71 @@ function App() {
     }
   };
 
+  // Fonction pour filtrer les scans en fonction de la recherche
+  const filterScans = (scans) => {
+    if (!searchQuery) return scans;
+
+    return scans.filter(scan => {
+      const searchLower = searchQuery.toLowerCase();
+      
+      // Recherche dans tous les champs si searchField est 'all'
+      if (searchField === 'all') {
+        return (
+          scan.username.toLowerCase().includes(searchLower) ||
+          scan.code1.toLowerCase().includes(searchLower) ||
+          scan.code2.toLowerCase().includes(searchLower) ||
+          formatDate(scan.scanned_at).toLowerCase().includes(searchLower)
+        );
+      }
+
+      // Recherche dans un champ spécifique
+      switch (searchField) {
+        case 'username':
+          return scan.username.toLowerCase().includes(searchLower);
+        case 'code1':
+          return scan.code1.toLowerCase().includes(searchLower);
+        case 'code2':
+          return scan.code2.toLowerCase().includes(searchLower);
+        case 'date':
+          return formatDate(scan.scanned_at).toLowerCase().includes(searchLower);
+        default:
+          return true;
+      }
+    });
+  };
+
   const getSortedAdminScans = () => {
-    if (!allScans) return [];
-    
-    return [...allScans].sort((a, b) => {
+    let filteredScans = [...allScans];
+
+    // Appliquer les filtres existants
+    if (filterUser !== 'all') {
+      filteredScans = filteredScans.filter(scan => scan.username === filterUser);
+    }
+
+    if (filterMatch !== 'all') {
+      filteredScans = filteredScans.filter(scan => 
+        filterMatch === 'match' ? scan.is_match : !scan.is_match
+      );
+    }
+
+    // Appliquer la recherche
+    filteredScans = filterScans(filteredScans);
+
+    // Trier les résultats
+    return filteredScans.sort((a, b) => {
+      let comparison = 0;
       switch (sortField) {
         case 'date':
-          return sortOrder === 'desc' 
-            ? new Date(b.scanned_at) - new Date(a.scanned_at)
-            : new Date(a.scanned_at) - new Date(b.scanned_at);
+          comparison = new Date(b.scanned_at) - new Date(a.scanned_at);
+          break;
         case 'user':
-          return sortOrder === 'desc'
-            ? b.username.localeCompare(a.username)
-            : a.username.localeCompare(b.username);
+          comparison = a.username.localeCompare(b.username);
+          break;
         case 'match':
-          return sortOrder === 'desc'
-            ? (b.is_match ? 1 : 0) - (a.is_match ? 1 : 0)
-            : (a.is_match ? 1 : 0) - (b.is_match ? 1 : 0);
-        default:
-          return 0;
+          comparison = b.is_match - a.is_match;
+          break;
       }
-    }).filter(scan => {
-      // Appliquer les deux filtres
-      const matchFilter = filterMatch === 'all' ? true : 
-        filterMatch === 'match' ? scan.is_match : !scan.is_match;
-      const userFilter = filterUser === 'all' ? true : 
-        scan.username === filterUser;
-      
-      return matchFilter && userFilter;
+      return sortOrder === 'asc' ? comparison : -comparison;
     });
   };
 
@@ -729,6 +688,17 @@ function App() {
     setStartingCode('document');
     setShowMismatchPopup(false);
   };
+
+  // Vérifier la connexion au serveur au démarrage
+  useEffect(() => {
+    const checkConnection = async () => {
+      const isConnected = await checkServerConnection();
+      if (!isConnected) {
+        setError('Impossible de se connecter au serveur local. Assurez-vous que le serveur est démarré sur le port 3002.');
+      }
+    };
+    checkConnection();
+  }, []);
 
   return (
     <div className="app">
@@ -863,6 +833,24 @@ function App() {
                 {adminView === 'scans' ? (
                   <div className="admin-scans-container">
                     <div className="admin-controls">
+                      <div className="search-controls">
+                        <input
+                          type="text"
+                          placeholder="Rechercher..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        <select 
+                          value={searchField} 
+                          onChange={(e) => setSearchField(e.target.value)}
+                        >
+                          <option value="all">Tous les champs</option>
+                          <option value="username">Nom d'utilisateur</option>
+                          <option value="code1">Code Document</option>
+                          <option value="code2">Code Produit</option>
+                          <option value="date">Date</option>
+                        </select>
+                      </div>
                       <div className="sort-controls">
                         <label>Trier par :</label>
                         <select 
@@ -1103,11 +1091,7 @@ function App() {
                             <button className="popup-confirm" onClick={handleScan}>
                               Confirmer
                             </button>
-                            <button className="popup-rescan" onClick={() => {
-                              setCode1('');
-                              setCode2('');
-                              setShowMismatchPopup(false);
-                            }}>
+                            <button className="popup-rescan" onClick={handleRescan}>
                               Scanner à nouveau
                             </button>
                           </div>
@@ -1158,21 +1142,32 @@ function App() {
       {showResetPasswordForm && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Réinitialiser le mot de passe</h3>
-            <input
-              type="password"
-              placeholder="Nouveau mot de passe"
-              value={resetPasswordData.newPassword}
-              onChange={(e) => setResetPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-            />
-            <div className="form-actions">
-              <button onClick={resetUserPassword} className="create">Réinitialiser</button>
+            <h2>Réinitialiser le mot de passe</h2>
+            <div className="form-group">
+              <input
+                type="password"
+                placeholder="Nouveau mot de passe"
+                value={resetPasswordData.newPassword}
+                onChange={(e) => setResetPasswordData({
+                  ...resetPasswordData,
+                  newPassword: e.target.value
+                })}
+                className="input-field"
+              />
+            </div>
+            <div className="modal-buttons">
+              <button 
+                onClick={resetUserPassword}
+                className="button primary-button"
+              >
+                Confirmer
+              </button>
               <button 
                 onClick={() => {
-                  setShowResetPasswordForm(false);
                   setResetPasswordData({ userId: null, newPassword: '' });
-                }} 
-                className="cancel"
+                  setShowResetPasswordForm(false);
+                }}
+                className="button secondary-button"
               >
                 Annuler
               </button>

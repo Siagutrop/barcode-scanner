@@ -1,39 +1,22 @@
-version: '3.3'
-
+version: '3.8'
 services:
-  frontend:
-    build:
-      context: .
-      args:
-        - API_URL=${API_URL:-http://localhost:3000}
+  barcode-scanner:
+    build: .
+    container_name: barcode-scanner
     ports:
-      - "${FRONTEND_PORT:-80}:80"
-    depends_on:
-      - server
-    restart: unless-stopped
-
-  server:
-    build: ./server
-    ports:
-      - "${API_PORT:-3000}:3000"
-    environment:
-      - DATABASE_URL=file:/app/data/scanner.db
-      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - "${PORT_FRONTEND:-4173}:4173"  # Frontend
+      - "${PORT_BACKEND:-3002}:3002"   # Backend
     volumes:
-      - ${DB_PATH:-./data}:/app/data
-    restart: unless-stopped
-
-  prisma-studio:
-    build: 
-      context: ./server
-      dockerfile: Dockerfile.prisma
-    ports:
-      - "${PRISMA_PORT:-5555}:5555"
+      - ./server/scanner.db:/app/server/scanner.db
+      - ./logs:/app/logs
     environment:
-      - DATABASE_URL=file:/app/data/scanner.db
-    volumes:
-      - ${DB_PATH:-./data}:/app/data
-    depends_on:
-      - server
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT_FRONTEND=${PORT_FRONTEND:-4173}
+      - PORT_BACKEND=${PORT_BACKEND:-3002}
+      - DB_PATH=${DB_PATH:-/app/server/scanner.db}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

@@ -1,23 +1,22 @@
-FROM node:18-alpine as builder
+# Build stage
+FROM node:18-alpine as build
 
 WORKDIR /app
-
-# Installation des dépendances
 COPY package*.json ./
-RUN npm install
-
-# Copie des fichiers sources
 COPY . .
-
-# Construction de l'application
-ARG API_URL
-ENV VITE_API_URL=${API_URL}
+RUN npm install
 RUN npm run build
 
-# Configuration du serveur nginx
-FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Production stage
+FROM node:18-alpine
 
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+WORKDIR /app
+COPY --from=build /app/dist ./dist
+COPY server ./server
+COPY package*.json ./
+COPY start-prod.js ./
+
+RUN npm install --production
+
+EXPOSE 3002 4173
+CMD ["npm", "run", "start-prod"]

@@ -6,17 +6,20 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "studio": "npx prisma studio -p 5555 -n 0.0.0.0"
+    "studio": "npx prisma studio --port 5555",
+    "prod": "set NODE_ENV=production&& node server.js",
+    "build": "node build.js"
   },
   "dependencies": {
-    "@prisma/client": "5.10.2",
-    "bcrypt": "^5.1.1",
+    "compression": "^1.8.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "prisma": "5.10.2",
+    "helmet": "^7.2.0",
     "sqlite3": "^5.1.7"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "@prisma/client": "^6.4.1",
+    "nodemon": "^3.0.2",
+    "prisma": "^6.4.1"
   }
 }
