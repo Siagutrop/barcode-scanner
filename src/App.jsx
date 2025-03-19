@@ -14,7 +14,7 @@ import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx'
 import './App.css'
 
 // URL du serveur backend
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Fonction pour vérifier si le serveur est disponible
 const checkServerConnection = async () => {
