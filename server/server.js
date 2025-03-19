@@ -434,8 +434,8 @@ process.on('SIGTERM', () => {
   });
 });
 
-const PORT = process.env.PORT || 3002; // Utiliser le port 3002
-app.listen(PORT, () => {
-  console.log(`Serveur démarré sur le port ${PORT} en mode ${process.env.NODE_ENV || 'développement'}`);
+const PORT = process.env.PORT_BACKEND || 3002; // Utiliser le port 3002
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Serveur démarré sur le port ${PORT} en mode ${process.env.NODE_ENV}`);
   initializeDatabase();
 });
