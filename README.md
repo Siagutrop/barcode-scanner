@@ -5,16 +5,15 @@ Application de scan de codes-barres avec interface web et stockage local. Cette 
 ## Fonctionnalités
 
 ### Scan et Comparaison
-- Scan de codes-barres via webcam
+- Scan de codes-barres via entrée manuelle ou douchette
 - Comparaison automatique des codes
-- Figeage automatique lors des popups pour éviter les scans non désirés
+- Figeage automatique lors des popups pour éviter les erreurs de saisie
 - Support du mode manuel et automatique
 
 ### Interface Utilisateur
 - Interface moderne et intuitive
-- Mode sombre/clair
 - Taille de police ajustable
-- Responsive design (mobile/desktop)
+- Optimisée pour une utilisation en production
 
 ### Gestion des Données
 - Historique complet des scans
@@ -127,7 +126,10 @@ Les logs sont disponibles dans :
 - Validation des données
 
 ## Licence
-[Votre licence]
+
+Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+
+Copyright (c) 2025 Siagutrop
 
 ## Contribution
 Les contributions sont les bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour plus de détails.
