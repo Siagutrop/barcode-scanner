@@ -1,7 +1,10 @@
 version: '3.8'
 services:
   barcode-scanner:
-    build: .
+    build:
+      context: .
+      args:
+        - VITE_API_URL=${API_URL:-http://$(hostname -I | awk '{print $1}'):3002}
     container_name: barcode-scanner
     ports:
       - "${PORT_FRONTEND:-4173}:4173"  # Frontend
