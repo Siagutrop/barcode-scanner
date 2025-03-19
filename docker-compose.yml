@@ -7,14 +7,15 @@ services:
       - "${PORT_FRONTEND:-4173}:4173"  # Frontend
       - "${PORT_BACKEND:-3002}:3002"   # Backend
     volumes:
-      - ./server/scanner.db:/app/server/scanner.db
+      - ./server/data:/app/server/data
       - ./logs:/app/logs
     environment:
       - NODE_ENV=${NODE_ENV:-production}
       - PORT_FRONTEND=${PORT_FRONTEND:-4173}
       - PORT_BACKEND=${PORT_BACKEND:-3002}
-      - DB_PATH=${DB_PATH:-/app/server/scanner.db}
+      - DB_PATH=/app/server/data/scanner.db
     restart: unless-stopped
+    user: "node"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002/health"]
       interval: 30s

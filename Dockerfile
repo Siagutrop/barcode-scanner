@@ -22,8 +22,13 @@ RUN npm install --production
 WORKDIR /app
 RUN npm install --production
 
-# Création du dossier pour les logs
-RUN mkdir -p logs
+# Création des dossiers nécessaires avec les bonnes permissions
+RUN mkdir -p logs && \
+    mkdir -p server/data && \
+    chown -R node:node /app
+
+# Changement d'utilisateur pour plus de sécurité
+USER node
 
 EXPOSE 3002 4173
 CMD ["npm", "run", "start-prod"]
