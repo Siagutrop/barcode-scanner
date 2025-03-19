@@ -4,7 +4,7 @@ services:
     build:
       context: .
       args:
-        - VITE_API_URL=${API_URL:-http://$(hostname -I | awk '{print $1}'):3002}
+        - VITE_API_URL=${API_URL}
     container_name: barcode-scanner
     ports:
       - "${PORT_FRONTEND:-4173}:4173"  # Frontend
@@ -17,7 +17,7 @@ services:
       - PORT_FRONTEND=${PORT_FRONTEND:-4173}
       - PORT_BACKEND=${PORT_BACKEND:-3002}
       - DB_PATH=/app/server/data/scanner.db
-      - VITE_API_URL=${API_URL:-http://$(hostname -I | awk '{print $1}'):3002}  # URL avec l'IP du serveur
+      - VITE_API_URL=${API_URL}
     restart: unless-stopped
     user: "node"
     healthcheck:
