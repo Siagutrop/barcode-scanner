@@ -13,16 +13,8 @@ import {
 import { utils as xlsxUtils, write as xlsxWrite } from 'xlsx'
 import './App.css'
 
-// URL du serveur backend - détection automatique
-const API_URL = (() => {
-  const currentUrl = window.location.origin;
-  // Si on est en développement, utiliser localhost
-  if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1')) {
-    return 'http://localhost:3002';
-  }
-  // En production, utiliser le même hôte que le frontend mais avec le port 3002
-  return currentUrl.replace(/:\d+/, ':3002');
-})();
+// URL du serveur backend
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002';
 
 // Fonction pour vérifier si le serveur est disponible
 const checkServerConnection = async () => {
