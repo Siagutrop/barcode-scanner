@@ -10,25 +10,29 @@ RUN npm run build
 # Production stage
 FROM node:18-alpine
 
-WORKDIR /app
-COPY --from=build /app/dist ./dist
-COPY server ./server
-COPY package*.json ./
-COPY start-prod.js ./
+# Créer l'utilisateur node s'il n'existe pas déjà
+RUN deluser --remove-home node 2>/dev/null || true && \
+    addgroup -S node && \
+    adduser -S -G node -u 1000 node
 
-# Installation des dépendances du serveur
+WORKDIR /app
+
+# Créer les dossiers nécessaires
+RUN mkdir -p logs server/data && \
+    chown -R node:node /app
+
+# Copier les fichiers avec les bonnes permissions
+COPY --chown=node:node --from=build /app/dist ./dist
+COPY --chown=node:node server ./server
+COPY --chown=node:node package*.json ./
+COPY --chown=node:node start-prod.js ./
+
+# Installation des dépendances
+USER node
 WORKDIR /app/server
 RUN npm install --production
 WORKDIR /app
 RUN npm install --production
-
-# Création des dossiers nécessaires avec les bonnes permissions
-RUN mkdir -p logs && \
-    mkdir -p server/data && \
-    chown -R node:node /app
-
-# Changement d'utilisateur pour plus de sécurité
-USER node
 
 EXPOSE 3002 4173
 CMD ["npm", "run", "start-prod"]
