@@ -5,15 +5,12 @@ Application de scan de codes-barres avec interface web et stockage local. Cette 
 ## Fonctionnalités
 
 ### Scan et Comparaison
-- Scan de codes-barres via entrée manuelle ou douchette
+- Scan de codes-barres via entrée manuel ou douchette
 - Comparaison automatique des codes
-- Figeage automatique lors des popups pour éviter les erreurs de saisie
-- Support du mode manuel et automatique
 
 ### Interface Utilisateur
 - Interface moderne et intuitive
 - Taille de police ajustable
-- Optimisée pour une utilisation en production
 
 ### Gestion des Données
 - Historique complet des scans
@@ -127,9 +124,27 @@ Les logs sont disponibles dans :
 
 ## Licence
 
-Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE) pour plus de détails.
+MIT License
 
 Copyright (c) 2025 Siagutrop
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ## Contribution
 Les contributions sont les bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md) pour plus de détails.
